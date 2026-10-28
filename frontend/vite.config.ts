@@ -16,5 +16,8 @@ export default defineConfig({
         changeOrigin: true,
       }
     }
+  },
+  preview: {
+    allowedHosts: ['aquasense-ai-qkg3.onrender.com']
   }
 })
