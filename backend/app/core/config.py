@@ -17,13 +17,19 @@ class Settings(BaseModel):
     DEBUG: bool = os.getenv("DEBUG", "true").lower() == "true"
     
     # CORS
-    CORS_ORIGINS: List[str] = [
-        origin.strip()
-        for origin in os.getenv(
-            "CORS_ORIGINS",
-            "https://aquasense-ai-qkg3.onrender.com"
-        ).split(",")
-    ]
+    CORS_ORIGINS: List[str] = list(
+        dict.fromkeys(
+            origin.strip()
+            for origin in (
+                os.getenv(
+                    "CORS_ORIGINS",
+                    "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://localhost:8000",
+                ).split(",")
+                + ["https://aquasense-ai-qkg3.onrender.com"]
+            )
+            if origin.strip()
+        )
+    )
     
     # Paths
     BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

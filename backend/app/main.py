@@ -20,7 +20,7 @@ from backend.app.api.v1.cloud import router as cloud_router
 from backend.app.api.v1.conservation import router as conservation_router
 
 
-app = FastAPI(
+api = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
     description=(
@@ -31,26 +31,17 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# CORS Middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 # Include Routers
-app.include_router(dashboard_router, prefix=settings.API_V1_STR)
-app.include_router(forecast_router, prefix=settings.API_V1_STR)
-app.include_router(anomalies_router, prefix=settings.API_V1_STR)
-app.include_router(models_router, prefix=settings.API_V1_STR)
-app.include_router(datasets_router, prefix=settings.API_V1_STR)
-app.include_router(cloud_router, prefix=settings.API_V1_STR)
-app.include_router(conservation_router, prefix=settings.API_V1_STR)
+api.include_router(dashboard_router, prefix=settings.API_V1_STR)
+api.include_router(forecast_router, prefix=settings.API_V1_STR)
+api.include_router(anomalies_router, prefix=settings.API_V1_STR)
+api.include_router(models_router, prefix=settings.API_V1_STR)
+api.include_router(datasets_router, prefix=settings.API_V1_STR)
+api.include_router(cloud_router, prefix=settings.API_V1_STR)
+api.include_router(conservation_router, prefix=settings.API_V1_STR)
 
 
-@app.on_event("startup")
+@api.on_event("startup")
 def startup_event():
     """Initializes in-memory telemetry dataset on startup."""
     try:
@@ -60,7 +51,7 @@ def startup_event():
         print(f"[AquaSense AI] Warning during initial data loading: {e}")
 
 
-@app.get("/", tags=["Root"])
+@api.get("/", tags=["Root"])
 def root():
     return {
         "project": settings.PROJECT_NAME,
@@ -71,7 +62,7 @@ def root():
     }
 
 
-@app.get("/health", response_model=HealthResponse, tags=["Health"])
+@api.get("/health", response_model=HealthResponse, tags=["Health"])
 def health_check():
     has_creds, _ = cloud_service._check_credentials()
     return HealthResponse(
@@ -80,3 +71,13 @@ def health_check():
         environment=settings.APP_ENV,
         cloud_status="live_gcp" if has_creds else "local_demo_mode",
     )
+
+
+# Wrap the complete application so CORS headers are also added to error responses.
+app = CORSMiddleware(
+    app=api,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type"],
+)

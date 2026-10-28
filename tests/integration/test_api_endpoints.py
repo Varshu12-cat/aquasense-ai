@@ -4,7 +4,7 @@ AquaSense AI - Integration Tests for REST API Endpoints
 
 import pytest
 from fastapi.testclient import TestClient
-from backend.app.main import app
+from backend.app.main import api, app
 
 client = TestClient(app)
 
@@ -16,6 +16,109 @@ def test_health_check_endpoint():
     assert data["status"] == "healthy"
     assert "version" in data
     assert "cloud_status" in data
+
+
+def test_frontend_cors_preflight():
+    origin = "https://aquasense-ai-qkg3.onrender.com"
+    response = client.options(
+        "/api/dashboard/summary",
+        headers={
+            "Origin": origin,
+            "Access-Control-Request-Method": "GET",
+            "Access-Control-Request-Headers": "content-type",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == origin
+    assert "GET" in response.headers["access-control-allow-methods"]
+    assert "content-type" in response.headers["access-control-allow-headers"].lower()
+
+    post_response = client.options(
+        "/api/forecast",
+        headers={
+            "Origin": origin,
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "content-type",
+        },
+    )
+    assert post_response.status_code == 200
+    assert post_response.headers["access-control-allow-origin"] == origin
+
+    upload_response = client.options(
+        "/api/datasets/upload",
+        headers={
+            "Origin": origin,
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "content-type",
+        },
+    )
+    assert upload_response.status_code == 200
+    assert upload_response.headers["access-control-allow-origin"] == origin
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/api/dashboard/summary",
+        "/api/conservation/insights",
+        "/api/models/metrics",
+        "/api/datasets",
+        "/api/datasets/default-campus-90days/preview",
+        "/api/cloud/status",
+    ],
+)
+def test_frontend_cors_on_affected_get_routes(path):
+    origin = "https://aquasense-ai-qkg3.onrender.com"
+    response = client.get(path, headers={"Origin": origin})
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == origin
+
+
+def test_cors_rejects_unconfigured_origin():
+    response = client.options(
+        "/api/dashboard/summary",
+        headers={
+            "Origin": "https://untrusted.example",
+            "Access-Control-Request-Method": "GET",
+        },
+    )
+
+    assert response.status_code == 400
+    assert "access-control-allow-origin" not in response.headers
+
+
+def test_cors_headers_are_added_to_error_responses():
+    origin = "https://aquasense-ai-qkg3.onrender.com"
+    response = client.get(
+        "/api/nonexistent-route",
+        headers={"Origin": origin},
+    )
+
+    assert response.status_code == 404
+    assert response.headers["access-control-allow-origin"] == origin
+
+
+def test_cors_headers_are_added_to_unhandled_server_errors():
+    origin = "https://aquasense-ai-qkg3.onrender.com"
+
+    def raise_server_error():
+        raise RuntimeError("Test server error")
+
+    api.add_api_route(
+        "/_test/unhandled-error",
+        raise_server_error,
+        methods=["GET"],
+    )
+    test_client = TestClient(app, raise_server_exceptions=False)
+    response = test_client.get(
+        "/_test/unhandled-error",
+        headers={"Origin": origin},
+    )
+
+    assert response.status_code == 500
+    assert response.headers["access-control-allow-origin"] == origin
 
 
 def test_dashboard_summary_endpoint():
