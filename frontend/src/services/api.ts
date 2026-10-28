@@ -9,7 +9,11 @@ import {
   CloudOperationsStatus,
 } from '../types';
 
-const API_BASE = '/api';
+const API_ORIGIN = (
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.DEV ? '' : 'https://aquasense-ai-backend-o7yk.onrender.com')
+).replace(/\/+$/, '');
+const API_BASE = `${API_ORIGIN}/api`;
 
 export const api = {
   async getDashboardSummary(): Promise<DashboardSummary> {
@@ -103,7 +107,7 @@ export const api = {
   },
 
   async checkHealth(): Promise<{ status: string; environment: string; cloud_status: string }> {
-    const res = await fetch(`/health`);
+    const res = await fetch(`${API_ORIGIN}/health`);
     if (!res.ok) throw new Error('Backend health check unreachable');
     return res.json();
   },
