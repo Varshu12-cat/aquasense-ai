@@ -1,0 +1,51 @@
+{
+  "pipelineInfo": {
+    "name": "aquasense-ai-mlops-pipeline",
+    "description": "Continuous retraining pipeline on Vertex AI Pipelines (Kubeflow)"
+  },
+  "root": {
+    "dag": {
+      "tasks": {
+        "data-ingestion-check": {
+          "taskInfo": {
+            "name": "validate-bigquery-data"
+          },
+          "componentRef": {
+            "name": "comp-validate-bigquery-data"
+          }
+        },
+        "model-training": {
+          "taskInfo": {
+            "name": "train-forecaster-models"
+          },
+          "dependentTasks": ["data-ingestion-check"],
+          "componentRef": {
+            "name": "comp-train-forecaster-models"
+          }
+        },
+        "model-evaluation-gate": {
+          "taskInfo": {
+            "name": "evaluate-and-compare"
+          },
+          "dependentTasks": ["model-training"],
+          "componentRef": {
+            "name": "comp-evaluate-and-compare"
+          }
+        },
+        "endpoint-deployment": {
+          "taskInfo": {
+            "name": "deploy-to-vertex-endpoint"
+          },
+          "dependentTasks": ["model-evaluation-gate"],
+          "componentRef": {
+            "name": "comp-deploy-to-vertex-endpoint"
+          }
+        }
+      }
+    }
+  },
+  "deploymentConfig": {
+    "project": "aquasense-ai-prod",
+    "location": "us-central1"
+  }
+}

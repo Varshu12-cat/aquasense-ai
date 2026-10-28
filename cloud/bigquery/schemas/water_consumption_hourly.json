@@ -1,0 +1,68 @@
+[
+  {
+    "name": "record_id",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Unique deterministic primary key (meter_id + timestamp)"
+  },
+  {
+    "name": "timestamp",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED",
+    "description": "UTC hourly observation timestamp"
+  },
+  {
+    "name": "meter_id",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Unique physical meter identifier"
+  },
+  {
+    "name": "location",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Facility campus location label"
+  },
+  {
+    "name": "water_consumption_liters",
+    "type": "FLOAT64",
+    "mode": "REQUIRED",
+    "description": "Hourly consumption volume in liters"
+  },
+  {
+    "name": "temperature_c",
+    "type": "FLOAT64",
+    "mode": "NULLABLE",
+    "description": "Ambient dry-bulb temperature in Celsius"
+  },
+  {
+    "name": "hour_of_day",
+    "type": "INT64",
+    "mode": "REQUIRED",
+    "description": "Hour component (0 to 23)"
+  },
+  {
+    "name": "day_of_week",
+    "type": "INT64",
+    "mode": "REQUIRED",
+    "description": "Day of week index (0=Monday, 6=Sunday)"
+  },
+  {
+    "name": "is_weekend",
+    "type": "INT64",
+    "mode": "REQUIRED",
+    "description": "1 if Saturday/Sunday else 0"
+  },
+  {
+    "name": "source_file",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "GCS URI of the ingested batch file"
+  },
+  {
+    "name": "ingested_at",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED",
+    "description": "Audit ingestion timestamp in UTC"
+  }
+]

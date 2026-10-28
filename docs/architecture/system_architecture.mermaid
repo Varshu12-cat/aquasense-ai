@@ -1,0 +1,54 @@
+graph TD
+    subgraph Data_Sources ["Telemetry Data Sources"]
+        M1["Smart Meter - Hostel Block A"]
+        M2["Smart Meter - Hostel Block B"]
+        M3["Smart Meter - Academic Complex"]
+        M4["Smart Meter - Cafeteria"]
+        M5["Smart Meter - Sports Facility"]
+        M6["Smart Meter - Science Labs"]
+    end
+
+    subgraph GCP_Ingestion ["Google Cloud Ingestion & Serverless ETL"]
+        GCS["Google Cloud Storage Bucket<br/>(gs://aquasense-ai-raw-telemetry)"]
+        EventTrigger["GCS Event: google.storage.object.finalize"]
+        CloudRunFunc["Cloud Run Function (Gen2)<br/>Event-Driven ETL Ingestion"]
+        IdempotentMerge["Idempotent Staging & MERGE Operation"]
+    end
+
+    subgraph GCP_DataWarehouse ["Enterprise Cloud Analytics Warehouse"]
+        BQ_Table["BigQuery Table<br/>water_consumption_hourly<br/>(Partitioned by Day)"]
+        BQ_DailyView["View: vw_daily_consumption"]
+        BQ_LocView["View: vw_location_performance"]
+        BQ_AnomView["View: vw_anomaly_log"]
+    end
+
+    subgraph MLOps_VertexAI ["Managed Machine Learning (Vertex AI)"]
+        VertexTraining["Vertex AI CustomContainerTrainingJob"]
+        FeatureEng["Time-Aware Split & Feature Engineering<br/>(Lags, Rolling Means, No Target Leakage)"]
+        ModelCompare["Model Comparison & Validation Gate<br/>(Linear Regression vs Random Forest vs GBR)"]
+        IsoForest["Isolation Forest Anomaly Detection Engine"]
+        ModelRegistry["Vertex AI Model Registry & Serialization"]
+    end
+
+    subgraph Application_Serving ["Containerized Web Service (Cloud Run / Docker)"]
+        FastAPI_App["FastAPI Backend REST Service<br/>(:8000)"]
+        Endpoints["REST Endpoints<br/>/api/forecast, /api/anomalies, /api/dashboard/summary"]
+    end
+
+    subgraph User_Interface ["Stakeholder Dashboards"]
+        ReactDashboard["AquaSense AI React + TypeScript Dashboard<br/>(Vite, Tailwind, Recharts)"]
+        LookerStudio["Google Looker Studio Cloud BI Dashboard<br/>(Connected to BigQuery Views)"]
+    end
+
+    M1 & M2 & M3 & M4 & M5 & M6 -->|Hourly CSV Telemetry| GCS
+    GCS -->|Finalize Event| EventTrigger
+    EventTrigger --> CloudRunFunc
+    CloudRunFunc --> IdempotentMerge
+    IdempotentMerge --> BQ_Table
+    BQ_Table --> BQ_DailyView & BQ_LocView & BQ_AnomView
+    BQ_Table --> VertexTraining
+    VertexTraining --> FeatureEng --> ModelCompare & IsoForest --> ModelRegistry
+    ModelRegistry --> FastAPI_App
+    BQ_Table --> FastAPI_App
+    FastAPI_App --> Endpoints --> ReactDashboard
+    BQ_DailyView & BQ_LocView & BQ_AnomView --> LookerStudio

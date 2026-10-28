@@ -1,0 +1,38 @@
+sequenceDiagram
+    autonumber
+    actor User as Facility Manager / Analyst
+    participant React as React TypeScript Web UI
+    participant API as FastAPI Backend Service
+    participant ML as ML Inference Engine
+    participant GCS as Google Cloud Storage
+    participant CloudFunc as Cloud Run Function ETL
+    participant BQ as BigQuery Warehouse
+    participant Vertex as Vertex AI Model Registry
+
+    Note over User, React: User uploads CSV telemetry or views dashboard
+    User->>React: Browse to Dashboard / Demand Forecast
+    React->>API: GET /api/dashboard/summary
+    API-->>React: Aggregated KPIs, Trends, Anomaly Counts
+
+    User->>React: Request 7-Day Forecast for Hostel Block A
+    React->>API: POST /api/forecast {meter_id: "MTR-HOSTEL-A", horizon: 168}
+    API->>ML: Predict with Random Forest & Confidence Bounds
+    ML-->>API: 168 Hourly Predictions (Confidence Bounds & Metrics)
+    API-->>React: Forecast Response with MAE & R²
+
+    Note over User, GCS: Raw Telemetry Batch Ingestion
+    User->>React: Upload Telemetry CSV Batch
+    React->>API: POST /api/datasets/upload
+    API->>GCS: Upload to gs://aquasense-ai-raw-telemetry
+    GCS-->>CloudFunc: Trigger google.storage.object.finalize
+    CloudFunc->>CloudFunc: Clean, Validate Schema, Deduplicate
+    CloudFunc->>BQ: Idempotent MERGE into water_consumption_hourly
+    BQ-->>CloudFunc: Merge Success
+    CloudFunc-->>GCS: Log Audit Lineage Complete
+
+    Note over BQ, Vertex: Periodic Retraining Pipeline
+    BQ->>Vertex: Extract Partitioned Training Dataset
+    Vertex->>Vertex: Time-Aware Split (Chronological 80/20)
+    Vertex->>Vertex: Train Baseline Linear Regression vs Random Forest
+    Vertex->>Vertex: Compute MAE, RMSE, R² & Anomaly Confusion Matrix
+    Vertex->>API: Update Active Model Artifacts & Metadata

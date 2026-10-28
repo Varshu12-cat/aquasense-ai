@@ -1,0 +1,121 @@
+{
+  "training_timestamp": "2026-10-27T16:36:29.077128Z",
+  "dataset_quality": {
+    "raw_record_count": 12960,
+    "cleaned_record_count": 12960,
+    "invalid_timestamps_removed": 0,
+    "duplicate_records_removed": 0,
+    "missing_target_removed": 0,
+    "meters_found": [
+      "MTR-ACAD-01",
+      "MTR-CAFE-01",
+      "MTR-GYM-01",
+      "MTR-HOSTEL-A",
+      "MTR-HOSTEL-B",
+      "MTR-LABS-01"
+    ],
+    "locations_found": [
+      "Academic Complex",
+      "Cafeteria & Dining Hall",
+      "Sports & Gym Facility",
+      "Hostel Block A",
+      "Hostel Block B",
+      "Science Laboratories"
+    ],
+    "min_timestamp": "2026-01-01T00:00:00",
+    "max_timestamp": "2026-03-31T23:00:00",
+    "consumption_min": 5.0,
+    "consumption_max": 673.18,
+    "consumption_mean": 135.43533256172842
+  },
+  "train_record_count": 10368,
+  "test_record_count": 2592,
+  "test_split_ratio": 0.2,
+  "features": [
+    "hour_of_day",
+    "day_of_week",
+    "is_weekend",
+    "temperature_c",
+    "sin_hour",
+    "cos_hour",
+    "sin_dow",
+    "cos_dow",
+    "lag_1h",
+    "lag_24h",
+    "rolling_mean_6h",
+    "rolling_mean_24h",
+    "rolling_std_24h"
+  ],
+  "models": {
+    "linear_regression": {
+      "type": "baseline",
+      "name": "Linear Regression Baseline",
+      "train_time_sec": 0.0046,
+      "inference_latency_sec_per_record": 0.0,
+      "mae": 18.8112,
+      "rmse": 37.1315,
+      "r2": 0.9361,
+      "model_file": "linear_regression.joblib"
+    },
+    "random_forest": {
+      "type": "ensemble",
+      "name": "Random Forest Regressor",
+      "train_time_sec": 0.7809,
+      "inference_latency_sec_per_record": 1.8e-05,
+      "mae": 8.7588,
+      "rmse": 16.6806,
+      "r2": 0.9871,
+      "feature_importance": {
+        "hour_of_day": 0.0024,
+        "day_of_week": 0.0026,
+        "is_weekend": 0.0018,
+        "temperature_c": 0.0048,
+        "sin_hour": 0.0027,
+        "cos_hour": 0.024,
+        "sin_dow": 0.0055,
+        "cos_dow": 0.0003,
+        "lag_1h": 0.0205,
+        "lag_24h": 0.839,
+        "rolling_mean_6h": 0.0049,
+        "rolling_mean_24h": 0.0883,
+        "rolling_std_24h": 0.0032
+      },
+      "model_file": "random_forest.joblib"
+    },
+    "gradient_boosting": {
+      "type": "ensemble",
+      "name": "Gradient Boosting Regressor",
+      "train_time_sec": 3.3866,
+      "inference_latency_sec_per_record": 3e-05,
+      "mae": 9.5358,
+      "rmse": 16.8328,
+      "r2": 0.9869,
+      "model_file": "gradient_boosting.joblib"
+    }
+  },
+  "anomaly_model": {
+    "algorithm": "Isolation Forest",
+    "contamination_parameter": 0.015,
+    "detected_anomalies_count": 195,
+    "model_file": "isolation_forest.joblib",
+    "feature_set": [
+      "water_consumption_liters",
+      "hour_of_day",
+      "lag_1h",
+      "rolling_mean_6h",
+      "rolling_mean_24h",
+      "rolling_std_24h"
+    ],
+    "ground_truth_available": true,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1_score": 0.0,
+    "confusion_matrix": {
+      "true_negatives": 12755,
+      "false_positives": 195,
+      "false_negatives": 10,
+      "true_positives": 0
+    }
+  },
+  "best_forecaster": "random_forest"
+}
